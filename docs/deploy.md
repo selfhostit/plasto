@@ -25,8 +25,9 @@ curl -fsSL https://raw.githubusercontent.com/selfhostit/plasto/main/deploy/insta
 ```
 
 This creates `~/plasto` with the compose files, a `.env` and a `pb_data` folder
-for the database, asks for a Tailscale auth key (press Enter to skip), and starts
-the app. Pass a folder to install elsewhere: `... | sh -s /srv/plasto`.
+for the database, asks for a Tailscale auth key (press Enter to skip, or set an
+empty `TS_AUTHKEY=` to skip the question), and starts the app. Pass a folder to
+install elsewhere: `... | sh -s /srv/plasto`.
 
 Then open the app and create your account; the first person becomes the owner.
 Without Tailscale it is only reachable on the machine itself, at
