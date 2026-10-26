@@ -64,8 +64,9 @@ if [ ! -f .env ]; then
 	fi
 	setenv TS_HOSTNAME "$(basename "$dir")"
 
+	# Asks only when TS_AUTHKEY is not set; set but empty means no Tailscale.
 	key=${TS_AUTHKEY:-}
-	if [ -z "$key" ] && interactive; then
+	if [ -z "${TS_AUTHKEY+set}" ] && interactive; then
 		echo
 		echo "Tailscale gives the app an https:// address that only your devices can reach,"
 		echo "which phones need to install it and get notifications. Paste an auth key from"
