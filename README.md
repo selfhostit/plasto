@@ -174,6 +174,9 @@ publishes that version.
 - **Tested on every change:** Go, web and Python worker tests and an end-to-end run of the published images
   (`make smoke`) in [CI](.github/workflows/ci.yml); Actions are pinned to commit hashes and
   Dependabot keeps Go, npm, Python, Docker and Actions dependencies current.
+- **Versioned releases:** installs update to a release, not to every change on `main`, and
+  every image has a signed attestation of the commit and workflow that built it
+  ([CHANGELOG.md](CHANGELOG.md), [docs/deploy.md](docs/deploy.md#check-where-an-image-came-from)).
 - **No analytics or tracking,** and no account anywhere else: the data stays in `pb_data` on your
   machine, with a nightly backup kept there.
 
