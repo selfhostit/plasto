@@ -12,9 +12,12 @@ anything to the internet.
                      worker on a Pi ──Tailscale────────┘
 ```
 
-Every push to `main` publishes two images for amd64, arm64 and armv7:
-`ghcr.io/selfhostit/plasto` (the app) and `ghcr.io/selfhostit/plasto-worker` (the
-Python workers). A tag like `v1.2.0` publishes `:v1.2.0` of both.
+Two images are published for amd64, arm64 and armv7: `ghcr.io/selfhostit/plasto` (the
+app) and `ghcr.io/selfhostit/plasto-worker` (the Python workers). A release tag like
+`v1.2.0` publishes `:1.2.0`, `:1.2`, `:1` and `:latest` of both; installs follow `:latest`,
+so they only update to a release. Every push to `main` publishes `:edge` and the commit
+hash, for trying out what's next. Each image comes with a signed
+[provenance attestation](#check-where-an-image-came-from).
 
 ## Install
 
@@ -63,9 +66,29 @@ cd ~/plasto && docker compose pull && docker compose up -d
 ```
 
 Running the install script again does the same and also refreshes the compose
-files. To stay on a release, or go back to one, set `PLASTO_IMAGE` (and
-`PLASTO_WORKER_IMAGE`) in `.env` to a tag, like `ghcr.io/selfhostit/plasto:v1.2.0`.
-Database migrations run on start, so take a backup before going back across one.
+files. Updates bring the newest release, listed with what changed in
+[CHANGELOG.md](../CHANGELOG.md). To stay on a release line, or go back to a release, set
+`PLASTO_IMAGE` (and `PLASTO_WORKER_IMAGE`) in `.env` to a tag, like
+`ghcr.io/selfhostit/plasto:1` (every 1.x) or `ghcr.io/selfhostit/plasto:1.2.0`. Use `:edge`
+to follow `main`. Database migrations run on start, so take a backup before going back
+across one.
+
+### Check where an image came from
+
+Every published image has a signed attestation that says which workflow run, in which
+repository and at which commit, built it. With the [GitHub CLI](https://cli.github.com):
+
+```sh
+gh attestation verify oci://ghcr.io/selfhostit/plasto:latest --repo selfhostit/plasto
+```
+
+It fails if the image was not built by this repository's CI, for example if someone pushed one by hand.
+
+### Releasing
+
+Add what changed under a new version in `CHANGELOG.md`, merge, then publish a GitHub
+release with a tag like `v1.2.0` (Releases > Draft a new release) and paste the changelog
+entry as its notes. CI tests it, publishes the images and attests them.
 
 ## Backups and restore
 
