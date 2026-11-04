@@ -109,7 +109,7 @@ jobs:
 
       # Build both images for this runner and deploy them with the compose file.
       - name: Build the app for the smoke test
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
@@ -118,7 +118,7 @@ jobs:
           cache-from: type=gha,scope=app
           cache-to: type=gha,mode=max,scope=app
       - name: Build the worker for the smoke test
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: workers
           load: true
@@ -158,7 +158,7 @@ jobs:
           done
       - name: Publish the app
         if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64,linux/arm/v7
@@ -169,7 +169,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=app
       - name: Publish the worker
         if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: workers
           platforms: linux/amd64,linux/arm64,linux/arm/v7
