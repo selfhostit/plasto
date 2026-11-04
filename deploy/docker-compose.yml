@@ -16,6 +16,9 @@ services:
     environment:
       TZ: ${TZ:-UTC}
       PLASTO_PUSH_CONTACT: ${PLASTO_PUSH_CONTACT:-}
+    # No extra privileges: the app needs none, so a bug in it can't use them.
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     mem_limit: 512m
 
   # Runs one of the workers in workers/, PLASTO_WORKER_SCRIPT (worker.py by default).
@@ -31,4 +34,7 @@ services:
       PLASTO_URL: http://app:8090
       PLASTO_WORKER: ${PLASTO_WORKER:-}
       PLASTO_WORKER_PASSWORD: ${PLASTO_WORKER_PASSWORD:-}
+    # No extra privileges: the app needs none, so a bug in it can't use them.
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     mem_limit: 256m
