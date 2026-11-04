@@ -52,8 +52,13 @@ curl -sf "$url/manifest.webmanifest" | grep -q '"display": "standalone"' || fail
 curl -sf "$url/api/app/setup" | grep -q '"needed":true' || fail "setup not offered"
 
 step "Signing up the owner"
+code=$(cat pb_data/setup_code 2>/dev/null)
+[ -n "$code" ] || fail "no setup code in pb_data"
+curl -s -H 'Content-Type: application/json' "$url/api/app/setup" \
+	-d '{"name":"Eve","email":"eve@example.com","password":"eve-test-pw","code":"WRONG-CODE"}' |
+	grep -q 'setup code is wrong' || fail "setup took a wrong code"
 curl -sf -H 'Content-Type: application/json' "$url/api/app/setup" \
-	-d '{"name":"Smoke","email":"smoke@example.com","password":"smoke-test-pw"}' >/dev/null ||
+	-d "{\"name\":\"Smoke\",\"email\":\"smoke@example.com\",\"password\":\"smoke-test-pw\",\"code\":\"$code\"}" >/dev/null ||
 	fail "setup failed"
 token=$(curl -sf -H 'Content-Type: application/json' \
 	"$url/api/collections/_superusers/auth-with-password" \

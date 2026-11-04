@@ -2,6 +2,8 @@ package app_test
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -42,6 +44,15 @@ func addUser(t testing.TB, a core.App, email, role string) (*core.Record, string
 	return u, token
 }
 
+// newSetupApp starts an empty app whose setup code is ABCD-EFGH.
+func newSetupApp(t testing.TB) *tests.TestApp {
+	a := newApp(t)
+	if err := os.WriteFile(filepath.Join(a.DataDir(), app.SetupCodeFile), []byte("ABCD-EFGH\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return a
+}
+
 func TestSetup(t *testing.T) {
 	scenarios := []tests.ApiScenario{
 		{
@@ -56,10 +67,13 @@ func TestSetup(t *testing.T) {
 			Name:           "setup creates the owner and an admin account",
 			Method:         http.MethodPost,
 			URL:            "/api/app/setup",
-			Body:           strings.NewReader(`{"name":" Ada ","email":"Ada@Example.com","password":"password123"}`),
+			Body:           strings.NewReader(`{"name":" Ada ","email":"Ada@Example.com","password":"password123","code":"abcd efgh"}`),
 			ExpectedStatus: http.StatusNoContent,
-			TestAppFactory: newApp,
+			TestAppFactory: newSetupApp,
 			AfterTestFunc: func(t testing.TB, a *tests.TestApp, _ *http.Response) {
+				if _, err := os.Stat(filepath.Join(a.DataDir(), app.SetupCodeFile)); !os.IsNotExist(err) {
+					t.Errorf("the setup code is still there: %v", err)
+				}
 				owner, err := a.FindAuthRecordByEmail("users", "ada@example.com")
 				if err != nil {
 					t.Fatal(err)
@@ -71,6 +85,29 @@ func TestSetup(t *testing.T) {
 					t.Errorf("no admin account: %v", err)
 				}
 			},
+		},
+		{
+			Name:            "setup refuses a wrong code",
+			Method:          http.MethodPost,
+			URL:             "/api/app/setup",
+			Body:            strings.NewReader(`{"name":"Eve","email":"eve@example.com","password":"password123","code":"ABCD-EFGX"}`),
+			ExpectedStatus:  http.StatusForbidden,
+			ExpectedContent: []string{"setup code is wrong"},
+			TestAppFactory:  newSetupApp,
+			AfterTestFunc: func(t testing.TB, a *tests.TestApp, _ *http.Response) {
+				if n, _ := a.CountRecords("users"); n != 0 {
+					t.Errorf("%d users after a wrong code", n)
+				}
+			},
+		},
+		{
+			Name:            "setup refuses a missing code",
+			Method:          http.MethodPost,
+			URL:             "/api/app/setup",
+			Body:            strings.NewReader(`{"name":"Eve","email":"eve@example.com","password":"password123"}`),
+			ExpectedStatus:  http.StatusForbidden,
+			ExpectedContent: []string{"setup code is wrong"},
+			TestAppFactory:  newApp,
 		},
 		{
 			Name:            "setup refuses a short password",
@@ -144,4 +181,25 @@ func TestUserRules(t *testing.T) {
 		}
 		s.Test(t)
 	}
+}
+
+func TestNewInstallMakesASetupCode(t *testing.T) {
+	a := newApp(t)
+	s := tests.ApiScenario{
+		Method:          http.MethodGet,
+		URL:             "/api/app/setup",
+		ExpectedStatus:  http.StatusOK,
+		ExpectedContent: []string{`"needed":true`},
+		TestAppFactory:  func(testing.TB) *tests.TestApp { return a },
+		AfterTestFunc: func(t testing.TB, a *tests.TestApp, _ *http.Response) {
+			b, err := os.ReadFile(filepath.Join(a.DataDir(), app.SetupCodeFile))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if code := strings.TrimSpace(string(b)); len(code) != 9 || code[4] != '-' {
+				t.Errorf("setup code = %q", code)
+			}
+		},
+	}
+	s.Test(t)
 }

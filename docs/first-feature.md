@@ -25,7 +25,7 @@ On GitHub, open plasto and click **Use this template**, then:
 git clone git@github.com:you/chores.git && cd chores
 scripts/rename.sh        # plasto becomes "chores", from the repository's name
 scripts/strip-demo.sh    # removes the demo items list
-make setup && make dev   # open http://localhost:5173 and create your account
+make setup && make dev   # open http://localhost:5173 and create your account with the setup code it prints
 ```
 
 Commit after each script, so `git diff` shows only your own work from then on.

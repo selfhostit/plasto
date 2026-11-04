@@ -119,4 +119,11 @@ if grep -q '^COMPOSE_FILE=.*tailscale' .env; then
 	fi
 fi
 echo "  Settings:         $dir/.env (then run this script again)"
-echo "  Open the app and create your account; the first person becomes the owner."
+# The app makes a one-time code for first-run setup, until the owner exists.
+code=$(cat pb_data/setup_code 2>/dev/null ||
+	docker compose logs app 2>/dev/null | sed -n 's/.*setup code: *//p' | tail -n 1)
+if [ -n "$code" ]; then
+	echo
+	say "Setup code: $code"
+	echo "  Open the app and create your account with this code; you become the owner."
+fi
