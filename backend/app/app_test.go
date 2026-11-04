@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/tests"
@@ -35,6 +36,32 @@ func TestRoutes(t *testing.T) {
 			ExpectedStatus:  http.StatusOK,
 			ExpectedContent: []string{"plasto test page"},
 			TestAppFactory:  setup,
+		},
+		{
+			Name:            "the web app only runs its own scripts",
+			Method:          http.MethodGet,
+			URL:             "/",
+			ExpectedStatus:  http.StatusOK,
+			ExpectedContent: []string{"plasto test page"},
+			TestAppFactory:  setup,
+			AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+				if csp := res.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "script-src 'self';") {
+					t.Errorf("Content-Security-Policy = %q", csp)
+				}
+			},
+		},
+		{
+			Name:            "the API has no page policy",
+			Method:          http.MethodGet,
+			URL:             "/api/app/info",
+			ExpectedStatus:  http.StatusOK,
+			ExpectedContent: []string{`"version"`},
+			TestAppFactory:  setup,
+			AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+				if csp := res.Header.Get("Content-Security-Policy"); csp != "" {
+					t.Errorf("Content-Security-Policy = %q", csp)
+				}
+			},
 		},
 	}
 
