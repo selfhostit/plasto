@@ -167,17 +167,21 @@ publishes that version.
   code the install prints (`backend/app/setup.go`).
 - **Sign-ins are rate limited** (10 a minute, `backend/migrations/*_rate_limits.go`), and the
   web app sends a Content Security Policy (`backend/app/headers.go`).
+<!-- TEMPLATE start -->
 - **Apps made from plasto start with all of the above,** and the template's own CI builds an
   app with `scripts/rename.sh` and `scripts/strip-demo.sh` and runs its tests.
+<!-- TEMPLATE end -->
 - **Tested on every change:** Go, web and Python worker tests and an end-to-end run of the published images
   (`make smoke`) in [CI](.github/workflows/ci.yml); Actions are pinned to commit hashes and
   Dependabot keeps Go, npm, Python, Docker and Actions dependencies current.
-- **No analytics or tracking,** and no selfhostit account: the data stays in `pb_data` on your
+- **No analytics or tracking,** and no account anywhere else: the data stays in `pb_data` on your
   machine, with a nightly backup kept there.
 
+<!-- TEMPLATE start -->
 Found a security problem? Please write to kalfasyan@pm.me rather than opening an issue
 ([security policy](https://github.com/selfhostit/.github/blob/main/SECURITY.md)). [Security and privacy](https://github.com/selfhostit/docs/blob/main/security.md) covers every selfhostit app:
 what protects an install, what you are trusting and what is not done yet.
+<!-- TEMPLATE end -->
 
 ## Support
 
