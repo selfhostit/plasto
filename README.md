@@ -55,13 +55,14 @@ make setup   # install dependencies
 make dev     # backend on :8090, web app with live reload on http://localhost:5173
 ```
 
-Open the app and create your account: the first person becomes the **owner**
-and can also sign in to the admin UI at http://localhost:8090/_/ with the same
+Open the app and create your account with the setup code that `make dev` prints:
+you become the **owner** and can also sign in to the admin UI at http://localhost:8090/_/ with the same
 email and password. Add more people there, in the `users` collection.
 
 ## What you get
 
-- **First-run setup and sign-in.** No terminal needed to create the first account.
+- **First-run setup and sign-in.** The first account is made on a setup screen, with a
+  one-time code from the installer or the app's log, so nobody else can claim a fresh install.
 - **Users and roles.** The owner manages everyone; members can see each other and
   edit themselves. Nobody can sign themselves up.
 - **Push notifications** straight from your server, with no account or third-party

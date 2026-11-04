@@ -6,6 +6,7 @@
   let name = $state('');
   let email = $state('');
   let password = $state('');
+  let code = $state('');
   let busy = $state(false);
   let error = $state('');
 
@@ -17,7 +18,7 @@
     busy = true;
     error = '';
     try {
-      await pb.send('/api/app/setup', { method: 'POST', body: { name, email, password } });
+      await pb.send('/api/app/setup', { method: 'POST', body: { name, email, password, code } });
       await session.login(email, password);
     } catch (err) {
       error = errorMessage(err, 'Could not save. Please try again.');
@@ -30,6 +31,21 @@
 <main class="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6 py-10">
   <Brand title="Welcome" subtitle="Create your account to get started." />
   <form class="flex flex-col gap-4" onsubmit={submit}>
+    <label>
+      Setup code
+      <input
+        autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        bind:value={code}
+        required
+        placeholder="ABCD-EF23"
+      />
+    </label>
+    <p class="-mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+      The installer showed it. It's also in the app's log: <code>docker compose logs app</code>, or
+      the container's log in your NAS's Docker app.
+    </p>
     <label>Name <input autocomplete="name" bind:value={name} required maxlength="100" /></label>
     <label>Email <input type="email" autocomplete="username" bind:value={email} required /></label>
     <label>

@@ -29,7 +29,10 @@ for the database, asks for a Tailscale auth key (press Enter to skip, or set an
 empty `TS_AUTHKEY=` to skip the question), and starts the app. Pass a folder to
 install elsewhere: `... | sh -s /srv/plasto`.
 
-Then open the app and create your account; the first person becomes the owner.
+Then open the app and create your account with the setup code the installer shows
+(it is also in `docker compose logs app`); you become the owner. Only someone who can
+see the machine has the code, so finish setup before or after making the app public,
+whichever suits you.
 Without Tailscale it is only reachable on the machine itself, at
 http://localhost:8090 (the port is bound to `127.0.0.1` on purpose).
 
