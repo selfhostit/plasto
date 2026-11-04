@@ -157,6 +157,28 @@ Pushes to `main` publish `ghcr.io/selfhostit/plasto` and
 `ghcr.io/selfhostit/plasto-worker` for amd64, arm64 and armv7; a `v*` tag
 publishes that version.
 
+## Security and maintenance
+
+- **Not on the internet:** the container listens on `127.0.0.1` only; reach it through
+  Tailscale or your own reverse proxy with HTTPS (`deploy/docker-compose.yml`).
+- **Locked-down container:** runs as a normal user, drops every Linux capability and
+  can't gain new ones.
+- **Nobody claims a new install before you:** the first account needs the one-time setup
+  code the install prints (`backend/app/setup.go`).
+- **Sign-ins are rate limited** (10 a minute, `backend/migrations/*_rate_limits.go`), and the
+  web app sends a Content Security Policy (`backend/app/headers.go`).
+- **Apps made from plasto start with all of the above,** and the template's own CI builds an
+  app with `scripts/rename.sh` and `scripts/strip-demo.sh` and runs its tests.
+- **Tested on every change:** Go, web and Python worker tests and an end-to-end run of the published images
+  (`make smoke`) in [CI](.github/workflows/ci.yml); Actions are pinned to commit hashes and
+  Dependabot keeps Go, npm, Python, Docker and Actions dependencies current.
+- **No analytics or tracking,** and no selfhostit account: the data stays in `pb_data` on your
+  machine, with a nightly backup kept there.
+
+Found a security problem? Please write to kalfasyan@pm.me rather than opening an issue
+([security policy](https://github.com/selfhostit/.github/blob/main/SECURITY.md)). [Security and privacy](https://github.com/selfhostit/docs/blob/main/security.md) covers every selfhostit app:
+what protects an install, what you are trusting and what is not done yet.
+
 ## Support
 
 If plasto saves you time, you can [buy me a coffee](https://buymeacoffee.com/kalfasyan).
