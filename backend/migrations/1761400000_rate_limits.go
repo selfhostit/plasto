@@ -19,8 +19,10 @@ func init() {
 		}
 		settings.RateLimits.Enabled = true
 		settings.RateLimits.Rules = []core.RateLimitRule{
-			// password sign-ins of users, workers and the admin UI
-			{Label: "*:auth", MaxRequests: 10, Duration: 60},
+			// password sign-ins of people and of the admin UI; workers sign
+			// in often by design, with passwords the owner sets
+			{Label: "users:auth", MaxRequests: 10, Duration: 60},
+			{Label: "_superusers:auth", MaxRequests: 10, Duration: 60},
 			{Label: "POST /api/app/setup", MaxRequests: 5, Duration: 60},
 		}
 		return app.Save(settings)

@@ -186,7 +186,7 @@ func TestMustAddCatchesUpWhenTheServerStarts(t *testing.T) {
 func TestSignInIsRateLimited(t *testing.T) {
 	a := newApp(t)
 	r := a.Settings().RateLimits
-	rule, ok := r.FindRateLimitRule([]string{"users:auth", "*:auth"})
+	rule, ok := r.FindRateLimitRule([]string{"_superusers:auth", "*:auth"})
 	if !r.Enabled || !ok || rule.MaxRequests != 10 || rule.Duration != 60 {
 		t.Errorf("rate limits = %+v", r)
 	}
