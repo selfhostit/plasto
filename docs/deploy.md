@@ -72,7 +72,9 @@ Database migrations run on start, so take a backup before going back across one.
 The app backs up the database and uploads every night at 03:00 and keeps the
 last 7, in `pb_data/backups`. A backup on the same disk doesn't survive the disk,
 so copy `pb_data` somewhere else too (Hyper Backup on a Synology, `rsync`, or S3
-storage set in the admin UI under Settings > Backups).
+storage set in the admin UI under Settings > Backups). Encrypt any copy that leaves
+the machine, and leave out the `tailscale` folder: it holds the machine's Tailscale
+key, which lets whoever has it join your tailnet as that machine.
 
 To restore, open the admin UI (`/_/`), go to Settings > Backups and restore one.
 To move to another machine, stop the app, copy the whole folder, and start it
