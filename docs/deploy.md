@@ -37,7 +37,9 @@ Then open the app and create your account with the setup code the installer show
 see the machine has the code, so finish setup before or after making the app public,
 whichever suits you.
 Without Tailscale it is only reachable on the machine itself, at
-http://localhost:8090 (the port is bound to `127.0.0.1` on purpose).
+http://localhost:8090 (the port is bound to `127.0.0.1` on purpose). When something
+else already has 8090, a new install takes the next free port and says so; `.env`
+keeps it from then on.
 
 Settings live in `.env`: time zone, port, Tailscale, the worker account and the
 image version. Change them and run `docker compose up -d` in the folder (or the

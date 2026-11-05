@@ -5,9 +5,10 @@
 #
 # or, from a clone, `sh deploy/install.sh [folder]`. It sets up a folder
 # (~/plasto by default) with the compose files and a .env, asks for a Tailscale
-# auth key the first time (or takes TS_AUTHKEY from the environment), and starts
-# the app. Run it again to update; it keeps your
-# .env and data and replaces the compose files, so keep your settings in .env.
+# auth key the first time (or takes TS_AUTHKEY from the environment), picks a
+# free port (PORT, 8090 by default, or the next one nothing uses), and starts
+# the app. Run it again to update; it keeps your .env (and so the port) and data
+# and replaces the compose files, so keep your settings in .env.
 set -eu
 
 app=plasto
@@ -33,6 +34,28 @@ setenv() {
 
 fetch() {
 	if command -v curl >/dev/null; then curl -fsSL "$1"; else wget -qO- "$1"; fi
+}
+
+# taken_ports: the TCP ports that something on this machine listens on, and the
+# ones Docker containers publish (stopped ones too, so they can start again)
+taken_ports() {
+	{ ss -ltn 2>/dev/null || netstat -an 2>/dev/null | awk '/^tcp/ && /LISTEN/'; } |
+		awk '{print $4}' | sed -n 's/.*[:.]\([0-9][0-9]*\)$/\1/p'
+	ids=$(docker ps -aq 2>/dev/null) || ids=
+	# shellcheck disable=SC2086 # one argument per container
+	[ -z "$ids" ] || docker inspect --format \
+		'{{range .HostConfig.PortBindings}}{{range .}}{{.HostPort}} {{end}}{{end}}' $ids 2>/dev/null |
+		tr ' ' '\n'
+}
+
+# free_port PORT: PORT if nothing uses it, else the first free port after it
+free_port() {
+	taken=" $(taken_ports | tr '\n' ' ') "
+	p=$1
+	while :; do
+		case $taken in *" $p "*) p=$((p + 1)) ;; *) break ;; esac
+	done
+	echo "$p"
 }
 
 command -v docker >/dev/null || die "Docker is not installed: https://docs.docker.com/engine/install/"
@@ -63,6 +86,13 @@ if [ ! -f .env ]; then
 		setenv PGID "${SUDO_GID:-$(id -g)}"
 	fi
 	setenv TS_HOSTNAME "$(basename "$dir")"
+	# Apps on one machine each need a port of their own: take PORT (8090 unless
+	# given), or the next free one when something has it. .env keeps it after that.
+	want=${PORT:-$(sed -n 's/^PORT=//p' .env)}
+	want=${want:-8090}
+	port=$(free_port "$want")
+	[ "$port" = "$want" ] || echo "Port $want is taken, so $app gets port $port."
+	setenv PORT "$port"
 
 	# Asks only when TS_AUTHKEY is not set; set but empty means no Tailscale.
 	key=${TS_AUTHKEY:-}
