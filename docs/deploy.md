@@ -14,8 +14,9 @@ anything to the internet.
 
 Two images are published for amd64, arm64 and armv7: `ghcr.io/selfhostit/plasto` (the
 app) and `ghcr.io/selfhostit/plasto-worker` (the Python workers). A release tag like
-`v1.2.0` publishes `:1.2.0`, `:1.2`, `:1` and `:latest` of both; installs follow `:latest`,
-so they only update to a release. Every push to `main` publishes `:edge` and the commit
+`v1.2.0` publishes `:1.2.0`, `:1.2`, `:1` and `:latest` of both; installs follow the
+major version (`:1`), so they only update to a release and never to a new major
+version on their own. Every push to `main` publishes `:edge` and the commit
 hash, for trying out what's next. Each image comes with a signed
 [provenance attestation](#check-where-an-image-came-from).
 
@@ -67,9 +68,10 @@ To add Tailscale later, set `TS_AUTHKEY` and uncomment the `COMPOSE_FILE` line i
 cd ~/plasto && docker compose pull && docker compose up -d
 ```
 
-Running the install script again does the same and also refreshes the compose
-files. Updates bring the newest release, listed with what changed in
-[CHANGELOG.md](../CHANGELOG.md). To stay on a release line, or go back to a release, set
+Updates bring the newest 1.x release, listed with what changed in
+[CHANGELOG.md](../CHANGELOG.md). Running the install script again also refreshes the
+compose files from the newest release (or from `PLASTO_REF`, a tag or branch), which is
+how an install moves to a new major version. To stay on a release line, or go back to a release, set
 `PLASTO_IMAGE` (and `PLASTO_WORKER_IMAGE`) in `.env` to a tag, like
 `ghcr.io/selfhostit/plasto:1` (every 1.x) or `ghcr.io/selfhostit/plasto:1.2.0`. Use `:edge`
 to follow `main`. Database migrations run on start, so take a backup before going back
@@ -90,7 +92,18 @@ It fails if the image was not built by this repository's CI, for example if some
 
 Add what changed under a new version in `CHANGELOG.md`, merge, then publish a GitHub
 release with a tag like `v1.2.0` (Releases > Draft a new release) and paste the changelog
-entry as its notes. CI tests it, publishes the images and attests them.
+entry as its notes. CI tests it, publishes the images and attests them. For a new major
+version, also change the image tags in `deploy/docker-compose.yml` (`:1`) in the same
+release.
+
+### Security checks
+
+[`security.yml`](../.github/workflows/security.yml) runs on every pull request, every push
+to `main` and every Monday: CodeQL on the Go, web, Python and workflow code, govulncheck on
+the Go code the app can reach, Grype on the web and worker dependencies and on the released
+images (it fails on a known high or critical vulnerability that has a fix), GitHub's dependency review on new dependencies, and gitleaks on the whole
+history. The containers run read-only as a normal user without capabilities. How to report
+a problem: [SECURITY.md](../SECURITY.md).
 
 ## Backups and restore
 
