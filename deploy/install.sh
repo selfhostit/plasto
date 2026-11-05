@@ -13,7 +13,6 @@ set -eu
 
 app=plasto
 repo=${PLASTO_REPO:-selfhostit/plasto}
-source=${PLASTO_SOURCE:-https://raw.githubusercontent.com/$repo/main/deploy}
 dir=${1:-${PLASTO_DIR:-$HOME/$app}}
 files="docker-compose.yml docker-compose.tailscale.yml .env.example"
 
@@ -34,6 +33,13 @@ setenv() {
 
 fetch() {
 	if command -v curl >/dev/null; then curl -fsSL "$1"; else wget -qO- "$1"; fi
+}
+
+# latest_release: the tag of the newest release, like v1.2.0 (empty if there is none)
+latest_release() {
+	url=https://github.com/$repo/releases/latest
+	if command -v curl >/dev/null; then curl -fsSI "$url"; else wget -S --spider "$url" 2>&1; fi |
+		sed -n 's|.*[Ll]ocation: .*/releases/tag/\([^[:space:]]*\).*|\1|p' | tr -d '\r' | head -n 1
 }
 
 # taken_ports: the TCP ports that something on this machine listens on, and the
@@ -62,9 +68,20 @@ command -v docker >/dev/null || die "Docker is not installed: https://docs.docke
 docker compose version >/dev/null 2>&1 || die "Docker Compose v2 is missing: https://docs.docker.com/compose/install/linux/"
 docker info >/dev/null 2>&1 || die "cannot talk to Docker; run this as a user in the docker group, or with sudo"
 
-say "Installing $app in $dir"
-mkdir -p "$dir"
 here=$(dirname "$0")
+# From a clone, the files next to this script; otherwise those of the newest release,
+# not whatever is on main. PLASTO_REF picks another tag or branch, PLASTO_SOURCE another
+# place altogether.
+if [ -f "$here/install.sh" ]; then
+	ref="the files in $here"
+else
+	ref=${PLASTO_REF:-$(latest_release || true)}
+	ref=${ref:-main}
+fi
+source=${PLASTO_SOURCE:-https://raw.githubusercontent.com/$repo/$ref/deploy}
+
+say "Installing $app ($ref) in $dir"
+mkdir -p "$dir"
 for f in $files; do
 	if [ -f "$here/install.sh" ] && [ "$(cd "$here" && pwd)" != "$(cd "$dir" && pwd)" ]; then
 		cp "$here/$f" "$dir/$f"

@@ -1,10 +1,11 @@
-# Runs the app, and optionally a worker, from the published images.
+# Runs the app, and optionally a worker, from the published images. They follow the
+# 1.x releases (`:1`); see docs/deploy.md to pin one release.
 # Settings come from .env next to this file (see .env.example); deploy/install.sh
 # sets everything up. Update with: docker compose pull && docker compose up -d
 
 services:
   app:
-    image: ${PLASTO_IMAGE:-ghcr.io/selfhostit/plasto:latest}
+    image: ${PLASTO_IMAGE:-ghcr.io/selfhostit/plasto:1}
     restart: unless-stopped
     # Run as the owner of ./pb_data, so the data folder stays yours (and a NAS user's).
     user: ${PUID:-1000}:${PGID:-1000}
@@ -19,12 +20,15 @@ services:
     # No extra privileges: the app needs none, so a bug in it can't use them.
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
+    # Nothing in the container can be changed; only pb_data and /tmp are writable.
+    read_only: true
+    tmpfs: [/tmp]
     mem_limit: 512m
 
   # Runs one of the workers in workers/, PLASTO_WORKER_SCRIPT (worker.py by default).
   # Enabled with COMPOSE_PROFILES=worker in .env.
   worker:
-    image: ${PLASTO_WORKER_IMAGE:-ghcr.io/selfhostit/plasto-worker:latest}
+    image: ${PLASTO_WORKER_IMAGE:-ghcr.io/selfhostit/plasto-worker:1}
     command: [python, "${PLASTO_WORKER_SCRIPT:-worker.py}"]
     profiles: [worker]
     restart: unless-stopped
@@ -37,4 +41,7 @@ services:
     # No extra privileges: the app needs none, so a bug in it can't use them.
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
+    # Nothing in the container can be changed; only /tmp is writable.
+    read_only: true
+    tmpfs: [/tmp]
     mem_limit: 256m
