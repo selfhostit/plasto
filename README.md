@@ -174,8 +174,9 @@ publishes that version.
 - **Tested on every change:** Go, web and Python worker tests and an end-to-end run of the published images
   (`make smoke`) in [CI](.github/workflows/ci.yml); Actions are pinned to commit hashes and
   Dependabot keeps Go, npm, Python, Docker and Actions dependencies current.
-- **Security scans** on every pull request and every week: CodeQL, Grype on the
-  dependencies and the released images, dependency review and gitleaks
+- **Security scans** on every pull request and every week: CodeQL, govulncheck on the
+  Go code, Grype on the other dependencies and the released images, dependency review and
+  gitleaks
   ([security.yml](.github/workflows/security.yml)).
 - **Versioned releases:** installs update to a release, not to every change on `main`, and
   every image has a signed attestation of the commit and workflow that built it

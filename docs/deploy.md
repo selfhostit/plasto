@@ -99,9 +99,9 @@ release.
 ### Security checks
 
 [`security.yml`](../.github/workflows/security.yml) runs on every pull request, every push
-to `main` and every Monday: CodeQL on the Go, web, Python and workflow code, Grype on the
-dependencies and on the released images (it fails on a known high or critical vulnerability
-that has a fix), GitHub's dependency review on new dependencies, and gitleaks on the whole
+to `main` and every Monday: CodeQL on the Go, web, Python and workflow code, govulncheck on
+the Go code the app can reach, Grype on the web and worker dependencies and on the released
+images (it fails on a known high or critical vulnerability that has a fix), GitHub's dependency review on new dependencies, and gitleaks on the whole
 history. The containers run read-only as a normal user without capabilities. How to report
 a problem: [SECURITY.md](../SECURITY.md).
 
