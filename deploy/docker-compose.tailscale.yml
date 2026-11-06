@@ -21,12 +21,16 @@ services:
     mem_limit: 256m
 
 configs:
-  # HTTPS on port 443 of the tailnet address, forwarded to the app.
+  # HTTPS on port 443 of the tailnet address, forwarded to the app, and port 80
+  # redirecting to it, so a typed http:// address works too.
   serve:
     content: |
       {
-        "TCP": { "443": { "HTTPS": true } },
+        "TCP": { "443": { "HTTPS": true }, "80": { "HTTP": true } },
         "Web": {
-          "$${TS_CERT_DOMAIN}:443": { "Handlers": { "/": { "Proxy": "http://app:8090" } } }
+          "$${TS_CERT_DOMAIN}:443": { "Handlers": { "/": { "Proxy": "http://app:8090" } } },
+          "$${TS_CERT_DOMAIN}:80": {
+            "Handlers": { "/": { "Redirect": "https://$${TS_CERT_DOMAIN}$${REQUEST_URI}" } }
+          }
         }
       }

@@ -57,7 +57,8 @@ install script again).
    The first visit can take a few seconds while the certificate is issued.
 
 On a phone, install the Tailscale app, open that address and add it to the home
-screen. Push notifications need this HTTPS address.
+screen. Push notifications need this HTTPS address. Type it with `https://`: the app
+answers only there, and plain `http://` is sent on to it.
 
 To add Tailscale later, set `TS_AUTHKEY` and uncomment the `COMPOSE_FILE` line in
 `.env`, then run `docker compose up -d`. `TS_HOSTNAME` sets the name.
