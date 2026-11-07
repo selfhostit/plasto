@@ -8,6 +8,7 @@
 running in one small container on your own hardware.**
 
 [![CI](https://github.com/selfhostit/plasto/actions/workflows/ci.yml/badge.svg)](https://github.com/selfhostit/plasto/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/selfhostit/plasto/badge)](https://scorecard.dev/viewer/?uri=github.com/selfhostit/plasto)
 [![License: MIT](https://img.shields.io/github/license/selfhostit/plasto)](LICENSE)
 [![Go](https://img.shields.io/github/go-mod/go-version/selfhostit/plasto?filename=backend%2Fgo.mod&logo=go&logoColor=white)](backend/go.mod)
 [![PocketBase](https://img.shields.io/badge/PocketBase-0.40-b8dbe4?logo=pocketbase&logoColor=black)](https://pocketbase.io)

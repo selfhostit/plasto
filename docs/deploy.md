@@ -89,6 +89,13 @@ gh attestation verify oci://ghcr.io/selfhostit/plasto:latest --repo selfhostit/p
 
 It fails if the image was not built by this repository's CI, for example if someone pushed one by hand.
 
+Each image also carries a software bill of materials (SBOM): the list of every package
+inside it, for checking against a new vulnerability yourself:
+
+```sh
+docker buildx imagetools inspect ghcr.io/selfhostit/plasto:latest --format '{{ json .SBOM }}'
+```
+
 ### Releasing
 
 Add what changed under a new version in `CHANGELOG.md`, merge, then publish a GitHub
