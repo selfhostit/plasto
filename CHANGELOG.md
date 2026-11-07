@@ -5,6 +5,8 @@ What changed in each release of plasto. Installs update to the newest release; s
 
 ## Unreleased
 
+- Every published image carries a software bill of materials (SBOM), and an OpenSSF
+  Scorecard run checks the repository's security practices every week.
 - golang.org/x/net 0.62.0, which fixes GO-2026-6860.
 - SECURITY.md: how to report a problem privately, and how quickly fixes ship.
 - Security scans on every pull request and every Monday: CodeQL, govulncheck, Grype
