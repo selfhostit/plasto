@@ -12,8 +12,12 @@ RUN uv export --locked --no-dev --no-emit-project -o requirements.txt \
     && uv build --wheel -o dist
 
 # --- runtime ---
-FROM python:3.15-slim
+FROM python:3.15-slim AS runtime
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+# Take Debian's security fixes now rather than waiting for the base image to be rebuilt.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /src/requirements.txt /src/dist/ /tmp/build/
 RUN pip install --no-cache-dir -r /tmp/build/requirements.txt \
     && pip install --no-cache-dir --no-deps /tmp/build/*.whl \

@@ -194,6 +194,8 @@ jobs:
           # a software bill of materials (SPDX), attached to the image on ghcr.io
           sbom: true
           tags: ${{ env.worker_tags }}
+          # Run the runtime stage fresh, so each release takes Debian's latest security fixes.
+          no-cache-filters: runtime
           cache-from: type=gha,scope=worker
           cache-to: type=gha,mode=max,scope=worker
 
