@@ -2,7 +2,7 @@ package jobs
 
 import (
 	"errors"
-	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -147,40 +147,40 @@ func TestBackupsAreOnByDefault(t *testing.T) {
 	}
 }
 
+// The catch-up run is in the background, so this triggers the serve hook directly
+// instead of using tests.ApiScenario: the scenario reads the test app's event counts
+// while the run's save writes them, a data race that sometimes crashed the test.
 func TestMustAddCatchesUpWhenTheServerStarts(t *testing.T) {
-	ran := make(chan struct{}, 1)
-	scenario := tests.ApiScenario{
-		Method:          http.MethodGet,
-		URL:             "/api/health",
-		ExpectedStatus:  http.StatusOK,
-		ExpectedContent: []string{"healthy"},
-		TestAppFactory: func(t testing.TB) *tests.TestApp {
-			a, err := tests.NewTestAppWithConfig(core.BaseAppConfig{DataDir: t.TempDir()})
-			if err != nil {
-				t.Fatal(err)
-			}
-			col, _ := a.FindCollectionByNameOrId(Collection)
-			rec := core.NewRecord(col)
-			rec.Set("name", "every-minute")
-			rec.Set("last_run", time.Now().Add(-time.Hour))
-			if err := a.Save(rec); err != nil {
-				t.Fatal(err)
-			}
-			MustAdd(a, "every-minute", "* * * * *", func(core.App) error {
-				ran <- struct{}{}
-				return nil
-			})
-			return a
-		},
-		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
-			select {
-			case <-ran:
-			case <-time.After(5 * time.Second):
-				t.Error("the missed job did not run when the server started")
-			}
-		},
+	a := newApp(t)
+	col, _ := a.FindCollectionByNameOrId(Collection)
+	rec := core.NewRecord(col)
+	rec.Set("name", "every-minute")
+	rec.Set("last_run", time.Now().Add(-time.Hour))
+	if err := a.Save(rec); err != nil {
+		t.Fatal(err)
 	}
-	scenario.Test(t)
+	ran := make(chan struct{}, 1)
+	MustAdd(a, "every-minute", "* * * * *", func(core.App) error {
+		ran <- struct{}{}
+		return nil
+	})
+
+	if err := a.OnServe().Trigger(&core.ServeEvent{App: a}, func(*core.ServeEvent) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-ran:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the missed job did not run when the server started")
+	}
+
+	// wait for the run to be recorded before the app is cleaned up
+	mu, _ := running.Load("every-minute")
+	mu.(*sync.Mutex).Lock()
+	mu.(*sync.Mutex).Unlock()
+	if got := lastRun(t, a, "every-minute").GetDateTime("last_run").Time(); time.Since(got) > time.Minute {
+		t.Errorf("last_run = %v, want the catch-up run", got)
+	}
 }
 
 func TestSignInIsRateLimited(t *testing.T) {
