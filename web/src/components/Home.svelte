@@ -2,6 +2,7 @@
   import { pb } from '../lib/pb';
   import { install } from '../lib/install.svelte';
   import { session } from '../lib/session.svelte';
+  import Account from './Account.svelte';
   import DemoItems from './DemoItems.svelte'; // DEMO
   import Notifications from './Notifications.svelte';
 
@@ -46,15 +47,7 @@
 
   <Notifications />
 
-  <section class="card text-sm text-zinc-600 dark:text-zinc-400">
-    Signed in as {user.email}{session.isOwner ? ' (owner)' : ''}.
-    {#if session.isOwner}
-      Manage users and data in the <a
-        class="text-brand-600 underline dark:text-brand-400"
-        href="/_/">admin page</a
-      >.
-    {/if}
-  </section>
+  <Account />
 
   {#await version then v}
     {#if v}<p class="mt-auto text-center text-xs text-zinc-400">Version {v}</p>{/if}

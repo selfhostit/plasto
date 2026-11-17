@@ -133,7 +133,8 @@ plasto/
 
 **Built in from day one**
 
-- First-run setup screen (create the owner account), with users and roles
+- First-run setup screen (create the owner account), with users and roles, and a
+  People screen where the owner adds people and gives them a new password
 - Web Push with VAPID keys generated and stored on first start, plus a per-device
   opt-in page that explains why notifications can't be turned on
 - A scheduler with catch-up for jobs missed while the server was off

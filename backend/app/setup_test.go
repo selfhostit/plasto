@@ -139,24 +139,32 @@ func TestSetup(t *testing.T) {
 
 func TestUserRules(t *testing.T) {
 	signup := `{"email":"new@example.com","password":"password123","passwordConfirm":"password123","role":"member"}`
+	newPassword := `{"password":"newpassword1","passwordConfirm":"newpassword1"}`
 	scenarios := []struct {
 		name, as, method, url, body string
 		status                      int
-		content                     string
+		content, hidden             string
 	}{
-		{"nobody can sign up", "", http.MethodPost, "/api/collections/users/records", signup, http.StatusBadRequest, ""},
-		{"members cannot add users", "member", http.MethodPost, "/api/collections/users/records", signup, http.StatusBadRequest, ""},
-		{"the owner adds users", "owner", http.MethodPost, "/api/collections/users/records", signup, http.StatusOK, `"role":"member"`},
-		{"members rename themselves", "member", http.MethodPatch, "/api/collections/users/records/{member}", `{"name":"Bob"}`, http.StatusOK, `"name":"Bob"`},
-		{"members cannot change their role", "member", http.MethodPatch, "/api/collections/users/records/{member}", `{"role":"owner"}`, http.StatusNotFound, ""},
-		{"members cannot remove anyone", "member", http.MethodDelete, "/api/collections/users/records/{member}", "", http.StatusNotFound, ""},
-		{"members see each other", "member", http.MethodGet, "/api/collections/users/records", "", http.StatusOK, `"totalItems":2`},
-		{"signed-out visitors see nobody", "", http.MethodGet, "/api/collections/users/records", "", http.StatusOK, `"totalItems":0`},
+		{"nobody can sign up", "", http.MethodPost, "/api/collections/users/records", signup, http.StatusBadRequest, "", ""},
+		{"members cannot add users", "member", http.MethodPost, "/api/collections/users/records", signup, http.StatusBadRequest, "", ""},
+		{"the owner adds users", "owner", http.MethodPost, "/api/collections/users/records", signup, http.StatusOK, `"role":"member"`, ""},
+		{"members rename themselves", "member", http.MethodPatch, "/api/collections/users/records/{member}", `{"name":"Bob"}`, http.StatusOK, `"name":"Bob"`, ""},
+		{"members cannot change their role", "member", http.MethodPatch, "/api/collections/users/records/{member}", `{"role":"owner"}`, http.StatusNotFound, "", ""},
+		{"members cannot remove anyone", "member", http.MethodDelete, "/api/collections/users/records/{member}", "", http.StatusNotFound, "", ""},
+		{"members see each other", "member", http.MethodGet, "/api/collections/users/records", "", http.StatusOK, `"totalItems":2`, `"owner@example.com"`},
+		{"the owner sees everyone's email", "owner", http.MethodGet, "/api/collections/users/records", "", http.StatusOK, `"member@example.com"`, ""},
+		{"the owner adds verified members", "owner", http.MethodPost, "/api/collections/users/records", `{"email":"new@example.com","password":"password123","passwordConfirm":"password123","role":"member","verified":true}`, http.StatusOK, `"verified":true`, ""},
+		{"the owner sets a member's password", "owner", http.MethodPatch, "/api/collections/users/records/{member}", newPassword, http.StatusOK, `"id":`, ""},
+		{"the owner needs their own current password", "owner", http.MethodPatch, "/api/collections/users/records/{owner}", newPassword, http.StatusBadRequest, "", ""},
+		{"members cannot set someone's password", "member", http.MethodPatch, "/api/collections/users/records/{owner}", newPassword, http.StatusNotFound, "", ""},
+		{"members need their current password", "member", http.MethodPatch, "/api/collections/users/records/{member}", newPassword, http.StatusBadRequest, "", ""},
+		{"members change their password", "member", http.MethodPatch, "/api/collections/users/records/{member}", strings.Replace(newPassword, "{", `{"oldPassword":"password123",`, 1), http.StatusOK, `"id":`, ""},
+		{"signed-out visitors see nobody", "", http.MethodGet, "/api/collections/users/records", "", http.StatusOK, `"totalItems":0`, ""},
 	}
 
 	for _, sc := range scenarios {
 		a := newApp(t)
-		_, ownerToken := addUser(t, a, "owner@example.com", "owner")
+		owner, ownerToken := addUser(t, a, "owner@example.com", "owner")
 		member, memberToken := addUser(t, a, "member@example.com", "member")
 		headers := map[string]string{}
 		switch sc.as {
@@ -168,7 +176,7 @@ func TestUserRules(t *testing.T) {
 		s := tests.ApiScenario{
 			Name:           sc.name,
 			Method:         sc.method,
-			URL:            strings.ReplaceAll(sc.url, "{member}", member.Id),
+			URL:            strings.NewReplacer("{member}", member.Id, "{owner}", owner.Id).Replace(sc.url),
 			Body:           strings.NewReader(sc.body),
 			Headers:        headers,
 			ExpectedStatus: sc.status,
@@ -178,6 +186,9 @@ func TestUserRules(t *testing.T) {
 			s.ExpectedContent = []string{sc.content}
 		} else {
 			s.NotExpectedContent = []string{`"id":`}
+		}
+		if sc.hidden != "" {
+			s.NotExpectedContent = append(s.NotExpectedContent, sc.hidden)
 		}
 		s.Test(t)
 	}
