@@ -15,7 +15,9 @@ updates:
     schedule: { interval: monthly }
   - package-ecosystem: docker
     directories: [/, /workers]
-    schedule: { interval: monthly }
+    schedule: { interval: weekly }
+    groups:
+      docker: { patterns: ['*'] }
   - package-ecosystem: uv
     directory: /workers
     schedule: { interval: weekly }
