@@ -58,14 +58,16 @@ make dev     # backend on :8090, web app with live reload on http://localhost:51
 
 Open the app and create your account with the setup code that `make dev` prints:
 you become the **owner** and can also sign in to the admin UI at http://localhost:8090/_/ with the same
-email and password. Add more people there, in the `users` collection.
+email and password. Add more people in the app: open **People** at the bottom of the home
+screen, add their name and email, and send them the message it shows with their password.
 
 ## What you get
 
 - **First-run setup and sign-in.** The first account is made on a setup screen, with a
   one-time code from the installer or the app's log, so nobody else can claim a fresh install.
-- **Users and roles.** The owner manages everyone; members can see each other and
-  edit themselves. Nobody can sign themselves up.
+- **Users and roles.** The owner adds people, gives them a new password and removes them
+  on the People screen; members can see each other and edit themselves. Everyone can
+  change their own password. Nobody can sign themselves up.
 - **Push notifications** straight from your server, with no account or third-party
   service. Each person turns them on per device; send one from Go with
   `push.ToUser(app, userID, push.Message{Title: "…", URL: "/…"})`. Phones need the
