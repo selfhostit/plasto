@@ -10,9 +10,15 @@ updates:
     schedule: { interval: weekly }
     groups:
       web: { patterns: ['*'] }
+    ignore:
+      # svelte-check 4 supports TypeScript 5 and 6 only
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      actions: { patterns: ['*'] }
   - package-ecosystem: docker
     directories: [/, /workers]
     schedule: { interval: weekly }
