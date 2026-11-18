@@ -39,12 +39,50 @@ func MustAdd(app core.App, name, cronExpr string, fn Func) {
 	if err != nil {
 		panic(fmt.Sprintf("job %q: %v", name, err))
 	}
-	app.Cron().MustAdd(name, cronExpr, func() { Run(app, name, fn) })
+	runs := &background{}
+	app.Cron().MustAdd(name, cronExpr, func() {
+		runs.do(func() { Run(app, name, fn) })
+	})
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		go catchUp(se.App, name, schedule, fn, time.Now())
+		now := time.Now()
+		go runs.do(func() { catchUp(se.App, name, schedule, fn, now) })
 		return se.Next()
 	})
+
+	// the app waits for a running job before it closes its database, so a run
+	// never writes to a closed app
+	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
+		runs.stop()
+		return e.Next()
+	})
+}
+
+// background tracks one job's runs so the app can wait for them when it stops.
+// Once stopped, new runs are skipped.
+type background struct {
+	mu      sync.Mutex
+	wg      sync.WaitGroup
+	stopped bool
+}
+
+func (b *background) do(f func()) {
+	b.mu.Lock()
+	if b.stopped {
+		b.mu.Unlock()
+		return
+	}
+	b.wg.Add(1)
+	b.mu.Unlock()
+	defer b.wg.Done()
+	f()
+}
+
+func (b *background) stop() {
+	b.mu.Lock()
+	b.stopped = true
+	b.mu.Unlock()
+	b.wg.Wait()
 }
 
 // Run runs a job now and records the result. A run is skipped while the
