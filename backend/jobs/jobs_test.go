@@ -191,3 +191,39 @@ func TestSignInIsRateLimited(t *testing.T) {
 		t.Errorf("rate limits = %+v", r)
 	}
 }
+
+func TestShutdownWaitsForARunningJob(t *testing.T) {
+	a := newApp(t)
+	col, _ := a.FindCollectionByNameOrId(Collection)
+	rec := core.NewRecord(col)
+	rec.Set("name", "slow")
+	rec.Set("last_run", time.Now().Add(-time.Hour))
+	if err := a.Save(rec); err != nil {
+		t.Fatal(err)
+	}
+	started, release := make(chan struct{}), make(chan struct{})
+	MustAdd(a, "slow", "* * * * *", func(core.App) error {
+		close(started)
+		<-release
+		return nil
+	})
+	if err := a.OnServe().Trigger(&core.ServeEvent{App: a}, func(*core.ServeEvent) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	<-started
+
+	stopped := make(chan time.Time)
+	go a.OnTerminate().Trigger(&core.TerminateEvent{App: a}, func(*core.TerminateEvent) error {
+		stopped <- lastRun(t, a, "slow").GetDateTime("last_run").Time()
+		return nil
+	})
+	select {
+	case <-stopped:
+		t.Fatal("the app stopped while the job was still running")
+	case <-time.After(100 * time.Millisecond):
+	}
+	close(release)
+	if got := <-stopped; time.Since(got) > time.Minute {
+		t.Errorf("last_run = %v, want the run that just finished", got)
+	}
+}
